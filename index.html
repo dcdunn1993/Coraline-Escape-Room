@@ -3,414 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coraline: The Game of Souls</title>
+    <title>Coraline: The Twisting Escape</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&family=Inter:wght@400;700&display=swap');
-
         body {
-            background-color: #0a0a0a;
-            color: #e5e5e5;
-            font-family: 'Special Elite', monospace; /* Typewriter style for the book feel */
+            font-family: 'Inter', sans-serif;
+            background-color: #050208;
+            color: #e0e0e0;
         }
-
-        .title-font {
+        .font-creepster {
             font-family: 'Creepster', cursive;
         }
-
-        .btn-standard {
+        .game-container {
+            background-color: #1a1a2e;
+            border: 2px solid #5a4a7e;
+            box-shadow: 0 0 30px 10px rgba(170, 0, 255, 0.2);
+        }
+        .game-button {
+            background-color: #7e57c2;
+            color: #ffffff;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 12px 24px;
             transition: all 0.3s ease;
-            border: 1px solid #4a4a4a;
+            border: 2px solid #5a4a7e;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
-        .btn-standard:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); /* Purple glow */
-            border-color: #8b5cf6;
+        .game-button:hover {
+            background-color: #5e35b1;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
         }
-
-        /* Creepy Animations */
-        @keyframes flicker {
-            0% { opacity: 1; }
-            5% { opacity: 0.3; }
-            10% { opacity: 1; }
-            15% { opacity: 1; }
-            20% { opacity: 0.3; }
-            25% { opacity: 1; }
-            100% { opacity: 1; }
+        .choice-button {
+            background-color: #4a4a6e;
+            border: 2px solid #5a4a7e;
         }
-        .flicker {
-            animation: flicker 4s infinite;
+        .choice-button:hover {
+            background-color: #5a4a7e;
         }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+        .choice-button.selected {
+            background-color: #7e57c2;
+            border-color: #b39ddb;
         }
-        .float {
-            animation: float 6s ease-in-out infinite;
+        .text-input {
+            background-color: #1a1a2e;
+            border: 2px solid #5a4a7e;
+            color: #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
         }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4c1d95;
-            border-radius: 4px;
-        }
-        
-        .input-field {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: #fff;
-            font-family: 'Special Elite', monospace;
-        }
-        .input-field:focus {
+        .text-input:focus {
             outline: none;
-            border-color: #8b5cf6;
+            border-color: #7e57c2;
+            box-shadow: 0 0 10px rgba(170, 0, 255, 0.3);
         }
-
-        .puzzle-container {
-            background: rgba(20, 20, 20, 0.95);
-            border: 1px solid #333;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        .progress-bar-bg { background-color: #1a1a2e; }
+        .progress-bar-fg { background-color: #7e57c2; transition: width 0.5s ease; }
+        
+        /* Creepy Wrong Answer Modal */
+        #wrong-answer-modal {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #wrong-answer-box {
+            background-color: #110c1f;
+            border: 2px solid #443a5e;
+            animation: pulse-shadow 2s infinite;
+        }
+        @keyframes pulse-shadow {
+            0%, 100% { box-shadow: 0 0 20px 5px rgba(170, 0, 255, 0.2); }
+            50% { box-shadow: 0 0 30px 10px rgba(170, 0, 255, 0.4); }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]">
+<body class="flex items-center justify-center min-h-screen">
 
-    <!-- Main Game Container -->
-    <div id="game-container" class="w-full max-w-4xl p-4 md:p-8 relative">
+    <div id="game-container" class="game-container w-full max-w-2xl p-6 md:p-8 rounded-lg shadow-2xl m-4">
         
         <!-- Start Screen -->
-        <div id="screen-start" class="text-center space-y-8">
-            <h1 class="title-font text-6xl md:text-8xl text-purple-600 tracking-widest drop-shadow-lg flicker">CORALINE</h1>
-            <h2 class="text-2xl text-gray-400">The Game of Souls</h2>
-            <div class="max-w-lg mx-auto bg-black/50 p-6 border border-gray-800 rounded-lg">
-                <p class="mb-4">You have walked through the little door. The Beldam has trapped you. To escape, you must find the souls of the ghost children and survive the Other Mother's game.</p>
-                <p class="text-sm text-gray-500 italic">Warning: This experience requires sound. Use headphones for the best effect.</p>
-            </div>
-            <button onclick="startGame()" class="btn-standard px-8 py-4 bg-purple-900 text-white text-xl rounded-lg mt-8 hover:bg-purple-800">
-                ENTER THE TUNNEL
+        <div id="start-screen">
+            <h1 class="font-creepster text-5xl md:text-7xl text-center text-purple-300 mb-4" style="text-shadow: 2px 2px 5px #000;">The Twisting Escape</h1>
+            <img id="start-image" src="https://placehold.co/600x300/1a1a2e/7e57c2?text=The+Tunnel" alt="A swirling purple portal, representing the tunnel to the Other World." class="w-full h-auto rounded-lg mb-6 border-2 border-purple-400 object-cover" onerror="this.src='https://placehold.co/600x300/1a1a2e/7e57c2?text=Image+Missing';">
+            <p class="text-lg text-center text-purple-100 mb-8">You've crossed through the little door. Now, the Other Mother wants you to stay... forever. Find the souls of the ghost children and your parents to escape. But be warned: she loves games.</p>
+            <button id="start-button" class="game-button w-full text-2xl">
+                Click to Enter (Sound On)
             </button>
         </div>
 
-        <!-- Game Interface (Hidden initially) -->
-        <div id="game-interface" class="hidden bg-black/90 border border-purple-900/30 rounded-xl overflow-hidden shadow-2xl min-h-[600px] relative">
+        <!-- Game Scene -->
+        <div id="game-scene" class="hidden">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="scene-title" class="font-creepster text-2xl md:text-3xl text-purple-300"></h2>
+                <div class="font-bold text-lg text-purple-100">SOULS: <span id="soul-count">0</span>/3</div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full progress-bar-bg rounded-full h-4 mb-4 border-2 border-purple-900 overflow-hidden">
+                <div id="progress-bar" class="progress-bar-fg h-full rounded-full" style="width: 0%"></div>
+            </div>
             
-            <!-- Top Bar -->
-            <div class="bg-gray-900 p-4 flex justify-between items-center border-b border-gray-800">
-                <div class="text-purple-400 text-sm">LOCATION: <span id="location-text" class="text-white font-bold">THE DRAWING ROOM</span></div>
-                <div class="flex gap-4 text-sm">
-                    <div class="text-gray-400">SOULS: <span id="souls-count" class="text-yellow-500">0/3</span></div>
+            <!-- Image -->
+            <img id="scene-image" src="" alt="Scene image" class="w-full h-64 object-cover rounded-lg mb-4 border-2 border-purple-400">
+            
+            <!-- Text -->
+            <p id="scene-text" class="text-lg text-purple-100 mb-6 min-h-[50px]"></p>
+            
+            <!-- Puzzle -->
+            <div id="puzzle-container" class="mb-6">
+                <!-- Text Input -->
+                <div id="text-puzzle" class="hidden">
+                    <label id="text-puzzle-label" for="text-answer" class="block text-sm font-medium text-purple-200 mb-2">Your Answer:</label>
+                    <input type="text" id="text-answer" class="text-input w-full uppercase" placeholder="TYPE YOUR ANSWER">
+                </div>
+                <!-- Choice Puzzle -->
+                <div id="choice-puzzle" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Choices will be injected here -->
+                </div>
+                <!-- Cipher Puzzle -->
+                <div id="cipher-puzzle" class="hidden">
+                    <p class="text-center text-2xl font-mono tracking-widest text-purple-300 mb-4" id="cipher-code"></p>
+                    <label for="cipher-answer" class="block text-sm font-medium text-purple-200 mb-2">Deciphered Code:</label>
+                    <input type="text" id="cipher-answer" class="text-input w-full uppercase" placeholder="CRACK THE CODE">
                 </div>
             </div>
-
-            <!-- Content Area -->
-            <div id="scene-content" class="p-6 md:p-10 flex flex-col items-center text-center space-y-6">
-                <!-- Dynamic Content Injected Here -->
-            </div>
-
-            <!-- Audio Toggle -->
-            <button onclick="toggleAudio()" class="absolute bottom-4 right-4 text-gray-600 hover:text-white text-xs">
-                Toggle Sound
-            </button>
+            
+            <!-- Controls -->
+            <button id="submit-button" class="game-button w-full">Submit Answer</button>
         </div>
-
     </div>
 
-    <!-- Game Logic -->
+    <!-- Creepy Wrong Answer Modal -->
+    <div id="wrong-answer-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible">
+        <div id="wrong-answer-box" class="w-full max-w-md p-6 rounded-lg text-center">
+            <img src="https://placehold.co/150x150/110c1f/FF0000?text=A+Button+Eye" alt="A single, black button eye" class="w-24 h-24 mx-auto mb-4 rounded-full border-2 border-red-500" onerror="this.src='https://placehold.co/150x150/110c1f/FF0000?text=X';">
+            <h3 id="wrong-answer-title" class="font-creepster text-4xl text-red-400 mb-2">Not so clever...</h3>
+            <p id="wrong-answer-text" class="text-lg text-purple-100 mb-6">That's not right. Are you even trying?</p>
+            <button id="try-again-button" class="game-button bg-red-600 hover:bg-red-700 border-red-800">
+                Try Again
+            </button>
+        </div>
+    </div>
+
     <script>
-        // --- Audio System (Tone.js) ---
-        let synth, drone;
-        let isAudioStarted = false;
+        // --- GAME STATE ---
+        let currentSceneIndex = 0;
+        let soulsFound = 0;
+        let selectedChoice = null;
+        let drone, filter, reverb; // Tone.js audio components
 
-        async function initAudio() {
-            await Tone.start();
+        const wrongAnswerMessages = [
+            { title: "Wrong.", text: "She's watching you... and she's not impressed." },
+            { title: "Not so clever...", text: "Are you sure you're good enough for her game?" },
+            { title: "Try again, little shadow.", text: "This is only going to get harder." },
+            { title: "No, no, no.", text: "You'll be here forever with answers like that." }
+        ];
 
-            // Synth for sound effects (clicks, success, fail)
-            synth = new Tone.PolySynth(Tone.Synth).toDestination();
-            synth.volume.value = -8;
-
-            // Create a deep, ominous drone
-            const droneFilter = new Tone.AutoFilter({
-                frequency: 0.1, // Slow sweep
-                baseFrequency: 80, // Deep bass
-                octaves: 3
-            }).toDestination().start();
-
-            drone = new Tone.AMOscillator({
-                frequency: "C2", // Low C
-                type: "sine",
-                modulationType: "sawtooth",
-                harmonicity: 0.8
-            }).connect(droneFilter).start();
-
-            // Set initial volume to silent, we'll fade it in
-            drone.volume.value = -Infinity;
-
-            isAudioStarted = true;
-            console.log("Synthesized drone created.");
-            // We can just resolve immediately since no loading is needed
-            return Promise.resolve();
-        }
-
-        function playSound(type) {
-            if(!isAudioStarted) return;
-            if(type === 'click') synth.triggerAttackRelease("C2", "8n");
-            if(type === 'success') synth.triggerAttackRelease(["C4", "E4", "G4"], "4n");
-            if(type === 'fail') synth.triggerAttackRelease(["C2", "B1"], "2n");
-            if(type === 'spooky') synth.triggerAttackRelease(["D#3", "A#3"], "2n");
-        }
-
-        function toggleAudio() {
-            if (!isAudioStarted) return;
-            if (drone.volume.value > -Infinity) {
-                // If it's playing, fade it out
-                drone.volume.rampTo(-Infinity, 1.0);
-            } else {
-                // If it's silent, fade it in
-                drone.volume.rampTo(-20, 1.0); // -20dB is a good background level
-            }
-        }
-
-        // --- Game State ---
-        let gameState = {
-            scene: 0,
-            inventory: [],
-            soulsFound: 0
-        };
-
-        // --- Scenes Data ---
+        // --- SCENE DATA (22 Puzzles) ---
         const scenes = [
+            // --- ZONE 1: THE REAL WORLD (Puzzles 1-5) ---
             {
-                id: "intro",
-                title: "The Warning",
-                image: "https://placehold.co/600x300/1a1a1a/4c1d95?text=The+Living+Room", 
-                text: "You step into the drawing room. It looks like your own house, but... different. The colors are sharper. The shadows are deeper. On the floor, you see a circle of circus mice forming letters.",
-                puzzle: {
-                    type: "cipher",
-                    question: "The mice spell out a warning message. It is written in reverse code (A=Z, B=Y, etc). <br><br>Code: <strong>WLM'G TL</strong>",
-                    answer: "DON'T GO",
-                    hint: "The alphabet is backwards. W is D."
-                }
+                title: "The Drawing Room",
+                text: "You're exploring your new home. What color did your father say the drawing room was painted, before you found it was... different?",
+                image: "https://placehold.co/600x400/221122/997799?text=The+Pink+Palace",
+                puzzle: { type: 'textInput', label: 'Color of the room:', answer: 'PINK' }
             },
             {
-                id: "mirror",
-                title: "Behind the Mirror",
-                image: "https://placehold.co/600x300/000000/333333?text=The+Mirror+Closet",
-                text: "You are locked in the closet behind the mirror. Three ghostly figures float in the darkness. <br>'She stole our souls,' the tall girl whispers. 'Hidden in her world.'<br><br>To leave this closet and start the game, you must promise to find them. What object allows you to see the hidden things?",
-                puzzle: {
-                    type: "choice",
-                    options: [
-                        { text: "A Key", correct: false, feedback: "A key opens doors, but it does not show the truth." },
-                        { text: "The Stone with a Hole", correct: true, feedback: "Yes. The stone allows you to see the world as it truly is." },
-                        { text: "A Button", correct: false, feedback: "Never choose the button!" }
-                    ]
-                }
+                title: "The Mysterious Key",
+                text: "You find a large, old, black, rusty key. What does it unlock?",
+                image: "https://placehold.co/600x400/111111/EEEEEE?text=A+Black+Key",
+                puzzle: { type: 'choice', options: ['The front door', 'A trunk', 'The door in the drawing room', 'The cellar'], answer: 'The door in the drawing room' }
             },
             {
-                id: "theater",
-                title: "The Theater",
-                image: "https://placehold.co/600x300/2d0a0a/red?text=Miss+Spink+and+Forcible%27s+Stage",
-                text: "You enter the flat downstairs. It is a theater now. Dogs sit in the audience. On stage, two strange figures stand inside a massive sticky cocoon. <br>You spot something glimmering inside the cocoon. It is the first soul.",
-                puzzle: {
-                    type: "riddle",
-                    question: "To get the marble, you must identify what the dogs are eating. Through your stone, it looks like dry gray dust. But to the dogs, it is the finest treat. What is it?",
-                    answer: "CHOCOLATE",
-                    hint: "Miss Spink and Forcible always loved these sweets."
-                }
+                title: "The Tea Leaves",
+                text: "You visit Miss Spink and Forcible. They read your tea leaves. What do they see in your future?",
+                image: "https://placehold.co/600x400/332211/776655?text=Tea+Leaves",
+                puzzle: { type: 'choice', options: ['A spider', 'Great danger', 'A tall, dark stranger', 'A new friend'], answer: 'Great danger' }
             },
             {
-                id: "cellar",
-                title: "The Cellar",
-                image: "https://placehold.co/600x300/0f172a/1e293b?text=The+Dark+Cellar",
-                text: "Chapter 9. You descend into the cold, damp cellar. The smell is awful—like vinegar and old cheese. In the corner, something pale and swollen sits in a chair. It is the Other Father.",
-                puzzle: {
-                    type: "choice",
-                    question: "Look through the stone. The Other Father is not human anymore. What has he become?",
-                    options: [
-                        { text: "A Spider", correct: false, feedback: "No, the Beldam is the spider-like one." },
-                        { text: "A Giant Grub", correct: true, feedback: "Correct. He is a white, pulsating grub, consumed by the Beldam." },
-                        { text: "A Rat", correct: false, feedback: "The rats are the spies, not the father." }
-                    ]
-                }
+                title: "The Mice Circus",
+                text: "You talk to Mr. Bobo. He says his mice have a message for you. What is it? (Unscramble)",
+                image: "https://placehold.co/600x400/443322/998877?text=The+Mice",
+                puzzle: { type: 'cipher', code: 'T NOD OGT O ETH ODOR', answer: 'DO NOT GO TO THE DOOR' } // Simple anagram-like
             },
             {
-                id: "escape",
+                title: "The Amulet",
+                text: "After you tell them of the 'dream', Miss Spink and Forcible give you an amulet. What is it good for?",
+                image: "https://placehold.co/600x400/221122/997799?text=A+glowing+stone+with+a+hole",
+                puzzle: { type: 'choice', options: ['Bad things', 'Lost things', 'Good things', 'Old things'], answer: 'Lost things' }
+            },
+            // --- ZONE 2: THE OTHER WORLD (Puzzles 6-10) ---
+            {
+                title: "The Other Father's Song",
+                text: "You're in the Other World. The Other Father plays a song for you. What is his song about?",
+                image: "https://placehold.co/600x400/443322/998877?text=The+Other+Father+at+his+piano",
+                puzzle: { type: 'textInput', label: 'His song is about...', answer: 'CORALINE' }
+            },
+            {
+                title: "The Marvelous Garden",
+                text: "You explore the 'marvelous' garden. From above, what shape does it make?",
+                image: "https://placehold.co/600x400/333333/999999?text=A+glowing,+magical+garden",
+                puzzle: { type: 'choice', options: ['A spider web', 'A button', 'Your face', 'A rat'], answer: 'Your face' }
+            },
+            {
+                title: "The Cat's Name",
+                text: "You meet the cat. He can talk here. He says cats don't need names to know who they are. 'We know who we are. But who are...?'",
+                image: "https://placehold.co/600x400/111111/EEEEEE?text=A+black+cat+with+blue+eyes",
+                puzzle: { type: 'textInput', label: 'Finish the cat\'s quote:', answer: 'YOU' }
+            },
+            {
+                title: "The Cat's Warning",
+                text: "The cat gives you a warning about the Other Mother. He says 'She wants something to...' what?",
+                image: "https://placehold.co/600x400/111111/EEEEEE?text=A+black+cat+with+blue+eyes",
+                puzzle: { type: 'choice', options: ['Eat', 'Play with', 'Love', 'Trap'], answer: 'Love' }
+            },
+            {
+                title: "Her True Name",
+                text: "The cat tells you her real name, her *true* name. What is it?",
+                image: "https://placehold.co/600x400/110011/DDCCDD?text=The+Other+Mother's+shadow",
+                puzzle: { type: 'textInput', label: 'Her name is...', answer: 'BELDAM' }
+            },
+            // --- ZONE 3: THE GAME (Puzzles 11-18) ---
+            {
+                title: "The Ghost's Warning",
+                text: "You find the ghost children. They whisper to you: 'She will ______ you the world, but she is a ______ of tricks.' What are the two words?",
+                image: "https://placehold.co/600x400/333355/AAAAEE?text=Three+ghostly+figures",
+                puzzle: { type: 'textInput', label: "Two words (e.g., WORD WORD)", answer: 'PROMISE MASTER' }
+            },
+            {
+                title: "The Game Begins",
+                text: "The Other Mother agrees to a 'finding' game. If you win, you go free. If you lose, what happens?",
+                image: "https://placehold.co/600x400/110011/DDCCDD?text=The+Other+Mother's+Game",
+                puzzle: { type: 'choice', options: ['You die', 'You stay here forever', 'You get button eyes', 'All of the above'], answer: 'All of the above' }
+            },
+            {
+                title: "The Unraveling World",
+                text: "You begin your search. You look at the 'delicious' food on a picnic blanket through your stone. What is it really?",
+                image: "https://placehold.co/600x400/333333/999999?text=A+fading,+grey+garden",
+                puzzle: { type: 'choice', options: ['Nothing at all', 'Beetles and sludge', 'Dust and cobwebs', 'Moldy bread'], answer: 'Beetles and sludge' }
+            },
+            {
+                title: "The Theater - Soul 1",
+                text: "You're in the theater. The 'other' Miss Spink and Forcible are a single creature in a gray, sticky sac. The soul is inside. How do you get it?",
+                image: "https://placehold.co/600x400/550000/FFCCCC?text=A+dark,+empty+theater",
+                puzzle: { type: 'choice', options: ['Ask politely', 'Cut it open', 'Throw the stone', 'Sing a song'], answer: 'Throw the stone' },
+                onCorrect: () => updateSouls(1)
+            },
+            {
+                title: "The Cellar's Secret",
+                text: "The cat warns you not to go in the cellar. Why? 'It's not that he's a...' (Unscramble the warning)",
+                image: "https://placehold.co/600x400/332211/776655?text=A+dark,+damp+cellar+door",
+                puzzle: { type: 'cipher', code: 'ALI', answer: 'LIAR' }
+            },
+            {
+                title: "The Cellar - Soul 2",
+                text: "You go to the cellar. The Other Father is there, but he's... different. You look through the stone. What has he become?",
+                image: "https://placehold.co/600x400/4a2e1a/a88b77?text=A+damp,+dark+cellar",
+                puzzle: { type: 'choice', options: ['A pile of rags', 'A giant spider', 'A giant grub', 'Invisible'], answer: 'A giant grub' },
+                onCorrect: () => updateSouls(2)
+            },
+            {
+                title: "The Attic - Cipher",
+                text: "You go to the attic. It's full of dust and strange shapes. A rat whispers a code: 'EHT LAME...'",
+                image: "https://placehold.co/600x400/222222/777777?text=A+dark,+dusty+attic",
+                puzzle: { type: 'cipher', code: 'EHT LAME SI NI EHT TEG', answer: 'THE LAME IS IN THE GET' } // Simple reverse
+            },
+            {
+                title: "The Attic - Soul 3",
+                text: "The code was 'THE LAME IS IN THE GET' (The soul is in the rat). The Other Mr. Bobo is here, made of rats. How do you find the soul?",
+                image: "https://placehold.co/600x400/222222/777777?text=A+man+made+of+rats",
+                puzzle: { type: 'choice', options: ['Shout at him', 'Grab the rat with the soul', 'Use the stone to see', 'Ask the cat to get it'], answer: 'Use the stone to see' },
+                onCorrect: () => updateSouls(3)
+            },
+            // --- ZONE 4: THE ESCAPE (Puzzles 19-22) ---
+            {
+                title: "The Snow Globe",
+                text: "You have all 3 souls. You just need to find your parents. You see them. Where are they?",
+                image: "https://placehold.co/600x400/AAAAFF/000033?text=A+snow+globe",
+                puzzle: { type: 'textInput', label: 'Where are your parents?', answer: 'SNOW GLOBE' }
+            },
+            {
                 title: "The Final Door",
-                image: "https://placehold.co/600x300/4c1d95/ffffff?text=The+Little+Door",
-                text: "You have survived the cellar. You have the souls. The Other Mother screams in rage. The tunnel is closing. You need the final password to lock the door behind you.",
+                text: "You run to the drawing room, but the Other Mother is there. She opens the door, revealing an empty, dark void. What is this void?",
+                image: "https://placehold.co/600x400/3a2a1a/9a8b7c?text=The+small+door",
+                puzzle: { type: 'textInput', label: 'The void is...', answer: 'THE HALLWAY' }
+            },
+            {
+                title: "The Escape",
+                text: "You trick her. You throw the cat at her, grab the snow globe, and run. What do you need to lock the door behind you?",
+                image: "https://placehold.co/600x400/3a2a1a/9a8b7c?text=The+small+door",
+                puzzle: { type: 'textInput', label: 'The most important item...', answer: 'KEY' }
+            },
+            {
+                title: "You Escaped... For Now",
+                text: "You found all 3 souls and your parents. You've locked the door... but the game isn't over. The Beldam's hand is still out there. You've proven your cleverness. Show your teacher this code:",
+                image: "https://placehold.co/600x400/AAAAFF/000033?text=The+real+world...?",
                 puzzle: {
-                    type: "input",
-                    question: "The cat told you her name. She is the creator of this twisted web. Who is she? (One word)",
-                    answer: "BELDAM",
-                    hint: "Starts with B. It means 'witch' or 'grandmother'."
+                    type: 'victory',
+                    code: 'BELDAM-HAND-22'
                 }
             }
         ];
 
-        // --- Logic Functions ---
+        // --- DOM ELEMENTS ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScene = document.getElementById('game-scene');
+        const startButton = document.getElementById('start-button');
+        const sceneTitle = document.getElementById('scene-title');
+        const soulCount = document.getElementById('soul-count');
+        const progressBar = document.getElementById('progress-bar');
+        const sceneImage = document.getElementById('scene-image');
+        const sceneText = document.getElementById('scene-text');
+        const puzzleContainer = document.getElementById('puzzle-container');
+        const textPuzzle = document.getElementById('text-puzzle');
+        const textPuzzleLabel = document.getElementById('text-puzzle-label');
+        const textAnswer = document.getElementById('text-answer');
+        const choicePuzzle = document.getElementById('choice-puzzle');
+        const cipherPuzzle = document.getElementById('cipher-puzzle');
+        const cipherCode = document.getElementById('cipher-code');
+        const cipherAnswer = document.getElementById('cipher-answer');
+        const submitButton = document.getElementById('submit-button');
+        
+        // Modal Elements
+        const wrongAnswerModal = document.getElementById('wrong-answer-modal');
+        const wrongAnswerTitle = document.getElementById('wrong-answer-title');
+        const wrongAnswerText = document.getElementById('wrong-answer-text');
+        const tryAgainButton = document.getElementById('try-again-button');
 
-        async function startGame() {
+        // --- AUDIO FUNCTIONS ---
+        async function initAudio() {
             try {
-                await initAudio(); // This now just creates the synths
-                if(drone) drone.volume.rampTo(-20, 2.0); // Fade in the drone
+                await Tone.start();
                 
-                document.getElementById('screen-start').classList.add('hidden');
-                document.getElementById('game-interface').classList.remove('hidden');
+                // Create a low, ominous drone
+                drone = new Tone.AMSynth({
+                    harmonicity: 0.5,
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.1, decay: 0.2, sustain: 1, release: 0.5 },
+                    modulation: { type: 'square' },
+                    modulationEnvelope: { attack: 0.5, decay: 0, sustain: 1, release: 0.5 }
+                }).toDestination();
+
+                filter = new Tone.AutoFilter("4n").toDestination().start();
+                reverb = new Tone.Reverb(2).toDestination();
                 
-                loadScene(0);
-            } catch (err) {
-                console.error("Failed to start audio, proceeding without it.", err);
-                // Even if audio fails, let the game start without it.
-                isAudioStarted = false; 
-                document.getElementById('screen-start').classList.add('hidden');
-                document.getElementById('game-interface').classList.remove('hidden');
-                loadScene(0);
-                // Hide the audio toggle if loading failed
-                const audioToggleButton = document.querySelector('button[onclick="toggleAudio()"]');
-                if (audioToggleButton) {
-                    audioToggleButton.style.display = 'none';
-                }
+                drone.connect(filter).connect(reverb);
+                
+                // Loop the drone
+                new Tone.Loop(time => {
+                    drone.triggerAttackRelease("C1", "2n", time);
+                }, "1n").start(0);
+
+                Tone.Transport.start();
+                console.log("Audio context started and drone is playing.");
+            } catch (e) {
+                console.error("Failed to start audio, proceeding without it.", e);
             }
+        }
+
+        // --- GAME LOGIC ---
+        function startGame() {
+            initAudio(); // Start the audio
+            startScreen.classList.add('hidden');
+            gameScene.classList.remove('hidden');
+            loadScene(currentSceneIndex);
         }
 
         function loadScene(index) {
-            gameState.scene = index;
             const scene = scenes[index];
-            const contentDiv = document.getElementById('scene-content');
-            document.getElementById('location-text').innerText = scene.title.toUpperCase();
+            if (!scene) {
+                console.error("Scene not found:", index);
+                return;
+            }
 
-            let html = `
-                <div class="w-full max-w-2xl relative group">
-                    <img src="${scene.image}" class="w-full h-64 object-cover rounded-lg shadow-lg opacity-80 group-hover:opacity-100 transition-opacity duration-500 border border-purple-900">
-                    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black to-transparent h-20"></div>
-                </div>
-                <p class="text-lg md:text-xl leading-relaxed font-light animate-fade-in">${scene.text}</p>
-                <div class="w-full h-px bg-purple-900/50 my-4"></div>
-            `;
+            sceneTitle.textContent = scene.title;
+            sceneText.textContent = scene.text;
+            sceneImage.src = scene.image;
+            sceneImage.alt = scene.title;
+            sceneImage.onerror = () => { sceneImage.src = 'https://placehold.co/600x400/1a1a2e/7e57c2?text=Image+Error'; };
+            
+            updateProgress(index);
 
-            if (scene.puzzle.type === 'choice') {
-                html += `<div class="grid grid-cols-1 gap-4 w-full max-w-md mt-4">`;
-                if(scene.puzzle.question) html += `<p class="text-purple-400 mb-2">${scene.puzzle.question}</p>`;
-                scene.puzzle.options.forEach((opt, i) => {
-                    html += `<button onclick="checkChoice(${index}, ${i})" class="btn-standard p-4 bg-gray-800 hover:bg-gray-700 rounded text-left border border-gray-600">${opt.text}</button>`;
+            // Show puzzle container
+            puzzleContainer.classList.remove('hidden');
+            // Hide all puzzle types
+            textPuzzle.classList.add('hidden');
+            choicePuzzle.classList.add('hidden');
+            cipherPuzzle.classList.add('hidden');
+            submitButton.classList.remove('hidden');
+
+            // Reset inputs
+            textAnswer.value = '';
+            cipherAnswer.value = '';
+            selectedChoice = null;
+
+            // Show the correct puzzle type
+            const puzzle = scene.puzzle;
+            if (puzzle.type === 'textInput') {
+                textPuzzle.classList.remove('hidden');
+                textPuzzleLabel.textContent = puzzle.label || 'Your Answer:';
+            } else if (puzzle.type === 'choice') {
+                choicePuzzle.classList.remove('hidden');
+                choicePuzzle.innerHTML = ''; // Clear old choices
+                puzzle.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('choice-button', 'w-full', 'p-4', 'rounded-lg', 'font-medium', 'transition-all');
+                    button.onclick = () => selectChoice(button, option);
+                    choicePuzzle.appendChild(button);
                 });
-                html += `</div>`;
-            } else {
-                html += `
-                    <div class="puzzle-container p-6 rounded w-full max-w-md mt-4 space-y-4">
-                        <p class="text-purple-400 font-bold">CHALLENGE:</p>
-                        <p>${scene.puzzle.question}</p>
-                        <input type="text" id="puzzle-input" class="input-field w-full p-3 rounded text-center uppercase tracking-widest" placeholder="TYPE ANSWER HERE">
-                        <div class="flex justify-between">
-                            <button onclick="showHint('${scene.puzzle.hint}')" class="text-xs text-gray-500 hover:text-gray-300 underline">Need a Hint?</button>
-                            <button onclick="checkInput(${index})" class="bg-purple-700 hover:bg-purple-600 text-white px-6 py-2 rounded font-bold transition-colors">SUBMIT</button>
-                        </div>
-                        <p id="feedback-msg" class="text-red-500 text-sm h-6"></p>
-                    </div>
-                `;
+            } else if (puzzle.type === 'cipher') {
+                cipherPuzzle.classList.remove('hidden');
+                cipherCode.textContent = puzzle.code;
+            } else if (puzzle.type === 'victory') {
+                // Victory screen
+                sceneText.innerHTML = `${scene.text} <br><br> <strong class="font-mono text-2xl text-yellow-300">${puzzle.code}</strong>`;
+                puzzleContainer.classList.add('hidden');
+                submitButton.classList.add('hidden');
             }
-
-            contentDiv.innerHTML = html;
         }
 
-        function checkInput(sceneIndex) {
-            const input = document.getElementById('puzzle-input').value.trim().toUpperCase();
-            const scene = scenes[sceneIndex];
-            const feedback = document.getElementById('feedback-msg');
+        function selectChoice(button, option) {
+            // Deselect all other buttons
+            Array.from(choicePuzzle.children).forEach(child => {
+                child.classList.remove('selected');
+            });
+            // Select the new one
+            button.classList.add('selected');
+            selectedChoice = option;
+        }
 
-            if (input === scene.puzzle.answer) {
-                playSound('success');
-                feedback.className = "text-green-500 text-sm h-6";
-                feedback.innerText = "CORRECT.";
-                
-                // Special logic for specific scenes to update "Souls Found"
-                if (sceneIndex === 2 || sceneIndex === 3) {
-                    gameState.soulsFound++;
-                    document.getElementById('souls-count').innerText = `${gameState.soulsFound}/3`;
+        function checkAnswer() {
+            const scene = scenes[currentSceneIndex];
+            const puzzle = scene.puzzle;
+            let isCorrect = false;
+
+            if (puzzle.type === 'textInput') {
+                isCorrect = textAnswer.value.trim().toUpperCase() === puzzle.answer;
+            } else if (puzzle.type === 'choice') {
+                isCorrect = selectedChoice === puzzle.answer;
+            } else if (puzzle.type === 'cipher') {
+                isCorrect = cipherAnswer.value.trim().toUpperCase() === puzzle.answer;
+            }
+
+            if (isCorrect) {
+                // Play a success sound
+                const synth = new Tone.Synth().toDestination();
+                synth.triggerAttackRelease("C5", "8n", Tone.now());
+
+                // Run onCorrect function if it exists
+                if (scene.onCorrect) {
+                    scene.onCorrect();
                 }
-
-                setTimeout(() => nextScene(), 1500);
-            } else {
-                playSound('fail');
-                feedback.className = "text-red-500 text-sm h-6";
-                feedback.innerText = "INCORRECT. THE BELDAM LAUGHS.";
-                shakeScreen();
-            }
-        }
-
-        function checkChoice(sceneIndex, optionIndex) {
-            const scene = scenes[sceneIndex];
-            const option = scene.puzzle.options[optionIndex];
-
-            if (option.correct) {
-                playSound('success');
-                // Show modal or feedback inline
-                document.getElementById('scene-content').innerHTML += `
-                    <div class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 animate-fade-in">
-                        <div class="text-center p-8 border border-green-500 rounded max-w-md bg-gray-900">
-                            <h3 class="text-2xl text-green-500 font-bold mb-4">CORRECT</h3>
-                            <p>${option.feedback}</p>
-                            <button onclick="nextScene()" class="mt-6 bg-green-700 text-white px-6 py-2 rounded hover:bg-green-600">CONTINUE</button>
-                        </div>
-                    </div>
-                `;
                 
-                if (sceneIndex === 3) { // If Cellar
-                    gameState.soulsFound++;
-                    document.getElementById('souls-count').innerText = `${gameState.soulsFound}/3`;
+                // Move to next scene
+                currentSceneIndex++;
+                if (currentSceneIndex < scenes.length) {
+                    loadScene(currentSceneIndex);
                 }
             } else {
-                playSound('fail');
-                alert(option.feedback); // Simple alert for wrong choice to keep flow quick, or custom modal
-                shakeScreen();
+                // Play a failure sound
+                const synth = new Tone.NoiseSynth().toDestination();
+                synth.triggerAttackRelease("8n", Tone.now());
+                
+                showWrongAnswerModal();
             }
         }
 
-        function nextScene() {
-            const nextIndex = gameState.scene + 1;
-            if (nextIndex < scenes.length) {
-                loadScene(nextIndex);
-                playSound('spooky');
-            } else {
-                showVictory();
+        function updateSouls(count) {
+            if (count > soulsFound) {
+                soulsFound = count;
+                soulCount.textContent = soulsFound;
+                // Play a success sound
+                const synth = new Tone.Synth().toDestination();
+                synth.triggerAttackRelease("E5", "8n", Tone.now() + 0.1);
+                synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
             }
         }
-
-        function showHint(hint) {
-            document.getElementById('feedback-msg').className = "text-yellow-500 text-sm h-6";
-            document.getElementById('feedback-msg').innerText = hint;
+        
+        function updateProgress(index) {
+            const totalPuzzles = scenes.length - 1; // Don't count victory screen
+            const progress = (index / totalPuzzles) * 100;
+            progressBar.style.width = `${progress}%`;
         }
 
-        function shakeScreen() {
-            const container = document.getElementById('game-interface');
-            container.style.transform = "translate(5px, 5px)";
-            setTimeout(() => container.style.transform = "translate(-5px, -5px)", 50);
-            setTimeout(() => container.style.transform = "translate(5px, -5px)", 100);
-            setTimeout(() => container.style.transform = "translate(0, 0)", 150);
+        function showWrongAnswerModal() {
+            const message = wrongAnswerMessages[Math.floor(Math.random() * wrongAnswerMessages.length)];
+            wrongAnswerTitle.textContent = message.title;
+            wrongAnswerText.textContent = message.text;
+            
+            wrongAnswerModal.classList.remove('opacity-0', 'invisible');
+            wrongAnswerModal.classList.add('opacity-100', 'visible');
+        }
+        
+        function closeWrongAnswerModal() {
+            wrongAnswerModal.classList.remove('opacity-100', 'visible');
+            wrongAnswerModal.classList.add('opacity-0', 'invisible');
         }
 
-        function showVictory() {
-            document.getElementById('game-interface').innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full text-center p-10 space-y-6">
-                    <h1 class="text-6xl title-font text-purple-500 mb-4 flicker">YOU ESCAPED</h1>
-                    <p class="text-xl">The door slams shut. You lock it. The sounds of the Other Mother fade into a distant scratch.</p>
-                    <p class="text-lg text-gray-400">You have saved the souls and yourself.</p>
-                    <p class="mt-8 p-4 border border-dashed border-gray-600 text-sm font-mono">
-                        TEACHER VERIFICATION CODE: <span class="text-yellow-500 font-bold text-xl">BUTTON-KEY-89</span>
-                    </p>
-                    <button onclick="location.reload()" class="btn-standard mt-8 px-6 py-3 bg-gray-800 text-white rounded">PLAY AGAIN</button>
-                </div>
-            `;
-            playSound('success');
-        }
+        // --- EVENT LISTENERS ---
+        startButton.addEventListener('click', startGame);
+        submitButton.addEventListener('click', checkAnswer);
+        tryAgainButton.addEventListener('click', closeWrongAnswerModal);
+
+        // Allow pressing Enter for text inputs
+        textAnswer.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+        cipherAnswer.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
 
     </script>
 </body>
